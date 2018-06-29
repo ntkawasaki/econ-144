@@ -1,0 +1,858 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Homework 5},
+            pdfauthor={Noah Kawasaki},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Homework 5}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{Noah Kawasaki}
+  \preauthor{\centering\large\emph}
+  \postauthor{\par}
+  \predate{\centering\large\emph}
+  \postdate{\par}
+  \date{6/6/2018}
+
+
+\begin{document}
+\maketitle
+
+\subsection{Textbook A}\label{textbook-a}
+
+\subsection{Problem 14.2}\label{problem-14.2}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m1 <-}\StringTok{ }\KeywordTok{garch.sim}\NormalTok{(}\DataTypeTok{alpha=}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\FloatTok{0.35}\NormalTok{), }\DataTypeTok{beta=}\KeywordTok{c}\NormalTok{(}\FloatTok{0.6}\NormalTok{), }\DataTypeTok{n=}\DecValTok{500}\NormalTok{)  }\CommentTok{# 0.75}
+\NormalTok{mean1 <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(m1)}
+\NormalTok{sd1 <-}\StringTok{ }\KeywordTok{sd}\NormalTok{(m1)}
+\NormalTok{sm1 <-}\StringTok{ }\NormalTok{(m1}\OperatorTok{-}\NormalTok{mean1)}\OperatorTok{/}\NormalTok{sd1}
+\NormalTok{sds1 <-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{((m1}\OperatorTok{-}\NormalTok{mean1)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+
+\NormalTok{m2 <-}\StringTok{ }\KeywordTok{garch.sim}\NormalTok{(}\DataTypeTok{alpha=}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\FloatTok{0.1}\NormalTok{), }\DataTypeTok{beta=}\KeywordTok{c}\NormalTok{(}\FloatTok{0.6}\NormalTok{), }\DataTypeTok{n=}\DecValTok{500}\NormalTok{)  }\CommentTok{# 0.16}
+\NormalTok{mean2 <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(m2)}
+\NormalTok{sd2 <-}\StringTok{ }\KeywordTok{sd}\NormalTok{(m2)}
+\NormalTok{sm2 <-}\StringTok{ }\NormalTok{(m2}\OperatorTok{-}\NormalTok{mean2)}\OperatorTok{/}\NormalTok{sd2}
+\NormalTok{sds2 <-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{((m2}\OperatorTok{-}\NormalTok{mean2)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+
+\CommentTok{# Time Series}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m1), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\KeywordTok{seq}\NormalTok{(}\DataTypeTok{from=}\DecValTok{1}\NormalTok{, }\DataTypeTok{to=}\KeywordTok{length}\NormalTok{(m1)), }\DataTypeTok{y=}\NormalTok{m1)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"red"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\OperatorTok{-}\DecValTok{18}\NormalTok{, }\DecValTok{18}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"GARCH(1,1)"}\NormalTok{, }\StringTok{"High Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Index"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Value"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m2), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\KeywordTok{seq}\NormalTok{(}\DataTypeTok{from=}\DecValTok{1}\NormalTok{, }\DataTypeTok{to=}\KeywordTok{length}\NormalTok{(m2)), }\DataTypeTok{y=}\NormalTok{m2)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"blue"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\OperatorTok{-}\DecValTok{18}\NormalTok{, }\DecValTok{18}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"GARCH(1,1)"}\NormalTok{, }\StringTok{"Low Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Index"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Value"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-1-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Conditional Standard Deviations}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m1), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\KeywordTok{seq}\NormalTok{(}\DataTypeTok{from=}\DecValTok{1}\NormalTok{, }\DataTypeTok{to=}\KeywordTok{length}\NormalTok{(m1)), }\DataTypeTok{y=}\NormalTok{sds1)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"red"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{20}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"GARCH(1,1) Conditional Standard Deviation"}\NormalTok{, }\StringTok{"High Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Index"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Value"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-1-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m1), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\KeywordTok{seq}\NormalTok{(}\DataTypeTok{from=}\DecValTok{1}\NormalTok{, }\DataTypeTok{to=}\KeywordTok{length}\NormalTok{(m1)), }\DataTypeTok{y=}\NormalTok{sds2)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"blue"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{20}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"GARCH(1,1) Conditional Standard Deviation"}\NormalTok{, }\StringTok{"Low Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Index"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Value"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-1-4.pdf}
+
+From the simulated time series plots we have a high persistence series
+with a persistence parameter of 0.875 and a low persistence series with
+a persistence parameter of 0.25. It is clear that the high persistence
+series has more volatility clustering and overall volatility, while the
+lowe persistence series resembles as MA process.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Histogram of original time series}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m1), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{m1)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{fill=}\StringTok{"red"}\NormalTok{, }\DataTypeTok{color=}\StringTok{"black"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\OperatorTok{-}\DecValTok{21}\NormalTok{, }\DecValTok{21}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Histogram GARCH(1,1)"}\NormalTok{, }\StringTok{"High Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Value"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(m2), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{m2)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{fill=}\StringTok{"blue"}\NormalTok{, }\DataTypeTok{color=}\StringTok{"black"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\OperatorTok{-}\DecValTok{21}\NormalTok{, }\DecValTok{21}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Histogram GARCH(1,1)"}\NormalTok{, }\StringTok{"Low Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Value"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-2-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Histogram of standardized time series}
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(sm1), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{sm1)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{fill=}\StringTok{"red"}\NormalTok{, }\DataTypeTok{color=}\StringTok{"black"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\OperatorTok{-}\DecValTok{4}\NormalTok{, }\DecValTok{4}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Histogram of Standardized GARCH(1,1)"}\NormalTok{, }\StringTok{"High Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Value"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-2-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{data.frame}\NormalTok{(sm2), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{sm2)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{fill=}\StringTok{"blue"}\NormalTok{, }\DataTypeTok{color=}\StringTok{"black"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\OperatorTok{-}\DecValTok{4}\NormalTok{, }\DecValTok{4}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Histogram of Standardized GARCH(1,1)"}\NormalTok{, }\StringTok{"Low Persistence"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Value"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Count"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-2-4.pdf}
+
+The histogram of the high persistence series shows fatter tails than the
+low persistence series. This is expected behavior as the persistence
+causes high and low extreme values to persist over time and thus have
+higher frequencies. The standardized series histograms exhibit the same
+patterns but less extremely (because they are standardized).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# ACF/PACF original time series}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(m1, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) High Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(m1, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) High Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(m2, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Low Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(m2, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Low Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-3-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# ACF/PACF standardized series}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(sm1, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Standardized, High Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(sm1, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Standardized, High Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-3-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(sm2, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Standardized, Low Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(sm2, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Standardized, Low Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-3-4.pdf}
+
+The ACF and PACF's of the original series and standardized original
+series dont really show any time dependence besides up to a lag of 1 in
+the high persistence series.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# ACF/PACF squared time series}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(m1}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Squared, High Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(m1}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Squared, High Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(m2}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Squared, Low Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(m2}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Squared, Low Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-4-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# ACF/PACF squared standardized series}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(sm1}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Standardized Squared, High Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(sm1}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Standardized Squared, High Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-4-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(sm2}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(1,1) Standardized Squared, Low Persistence"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(sm2}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"PACF - GARCH(1,1) Standardized Squared, Low Persistence"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-4-4.pdf}
+
+Now, the squared series shows much more time dependence. This is because
+squaring the series essentially shows us the magnitude of variation from
+the expected value. Now we see the high persistence series showing some
+strong time dependence with a slow decay to zero. The low persistence
+series show only dependence up to one lag.
+
+\subsection{Problem 14.3}\label{problem-14.3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sp <-}\StringTok{ }\KeywordTok{read_xls}\NormalTok{(}\StringTok{"/Users/noahkawasaki/Desktop/ECON 144/Textbook_data/Chapter14_exercises_data.xls"}\NormalTok{)}
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(sp}\OperatorTok{$}\NormalTok{Date, sp}\OperatorTok{$}\StringTok{`}\DataTypeTok{Adj Close}\StringTok{`}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{set_names}\NormalTok{(}\StringTok{"date"}\NormalTok{, }\StringTok{"adjusted"}\NormalTok{) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}
+    \DataTypeTok{return =} \KeywordTok{log}\NormalTok{(adjusted) }\OperatorTok{-}\StringTok{ }\KeywordTok{log}\NormalTok{(}\KeywordTok{lag}\NormalTok{(adjusted))}
+\NormalTok{  )}
+\NormalTok{df <-}\StringTok{ }\KeywordTok{na.omit}\NormalTok{(df)}
+
+
+\CommentTok{# Plot time series and return series}
+\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{date, }\DataTypeTok{y=}\NormalTok{adjusted)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"red"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"S&P500 Price"}\NormalTok{, }\StringTok{"2000-2013"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Date"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Price"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{date, }\DataTypeTok{y=}\NormalTok{return)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"red"}\NormalTok{, }\DataTypeTok{na.rm=}\OtherTok{TRUE}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"S&P500 Returns"}\NormalTok{, }\StringTok{"2000-2013"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Date"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Rate"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-5-2.pdf}
+
+From the time series and returns plot of the S\&P 500 it is obvious that
+this data has periods of high volatility and low volatility. Notably,
+from 2004 to 2007 is a period of low variation, but from 2007 to 2010
+there is some extreme deviation behavior.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# ACF and PACFs}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(df}\OperatorTok{$}\NormalTok{return, }\DataTypeTok{main=}\StringTok{"ACF - S&P500 Returns"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(df}\OperatorTok{$}\NormalTok{return, }\DataTypeTok{main=}\StringTok{"PACF - S&P500 Returns"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{((df}\OperatorTok{$}\NormalTok{return)}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"ACF - S&P500 Squared Returns"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{((df}\OperatorTok{$}\NormalTok{return)}\OperatorTok{^}\DecValTok{2}\NormalTok{, }\DataTypeTok{main=}\StringTok{"PACF - S&P500 Squared Returns"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-6-2.pdf}
+
+If we look at the ACF and PACF's of the original returns and the squared
+returns we'll see that there is some variance time dependence, and that
+ARCH and GARCH models should be applied to tease out these signals.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Find best ARCH Model}
+\NormalTok{arch =}\StringTok{ }\KeywordTok{garch}\NormalTok{(df}\OperatorTok{$}\NormalTok{return, }\DataTypeTok{order=}\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{11}\NormalTok{), }\DataTypeTok{trace=}\NormalTok{F)}
+\KeywordTok{summary}\NormalTok{(arch)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## garch(x = df$return, order = c(0, 11), trace = F)
+## 
+## Model:
+## GARCH(0,11)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -5.66957 -0.56424  0.05792  0.61311  3.23808 
+## 
+## Coefficient(s):
+##      Estimate  Std. Error  t value Pr(>|t|)    
+## a0  2.089e-05   1.900e-06   10.994  < 2e-16 ***
+## a1  1.117e-02   1.022e-02    1.093 0.274326    
+## a2  1.369e-01   1.545e-02    8.862  < 2e-16 ***
+## a3  8.298e-02   1.836e-02    4.519 6.22e-06 ***
+## a4  9.378e-02   1.858e-02    5.046 4.51e-07 ***
+## a5  9.358e-02   1.924e-02    4.865 1.15e-06 ***
+## a6  5.279e-02   1.877e-02    2.812 0.004929 ** 
+## a7  7.800e-02   1.595e-02    4.889 1.01e-06 ***
+## a8  1.172e-01   2.033e-02    5.762 8.29e-09 ***
+## a9  6.362e-02   1.731e-02    3.674 0.000239 ***
+## a10 8.660e-02   1.889e-02    4.584 4.56e-06 ***
+## a11 7.378e-02   1.874e-02    3.936 8.28e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Diagnostic Tests:
+##  Jarque Bera Test
+## 
+## data:  Residuals
+## X-squared = 203.59, df = 2, p-value < 2.2e-16
+## 
+## 
+##  Box-Ljung test
+## 
+## data:  Squared.Residuals
+## X-squared = 0.03471, df = 1, p-value = 0.8522
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{logLik}\NormalTok{(arch)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'log Lik.' 10453.14 (df=12)
+\end{verbatim}
+
+The best ARCH model for this data series is a high order one at
+ARCH(11). All coefficients but the a1 are statistically significant, and
+the model achieves a log likelihood of 10453.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(arch}\OperatorTok{$}\NormalTok{residuals[}\DecValTok{12}\OperatorTok{:}\KeywordTok{length}\NormalTok{(arch}\OperatorTok{$}\NormalTok{residuals)], }\DataTypeTok{main=}\StringTok{"ACF - ARCH(11) Residuals"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(arch}\OperatorTok{$}\NormalTok{residuals[}\DecValTok{12}\OperatorTok{:}\KeywordTok{length}\NormalTok{(arch}\OperatorTok{$}\NormalTok{residuals)], }\DataTypeTok{main=}\StringTok{"PACF - ARCH(11) Residuals"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+Looking at the ACF and PACF of the residuals, it appears that for the
+most part these signals have been accounted for.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# GARCH Model}
+\NormalTok{garch <-}\StringTok{ }\KeywordTok{garchFit}\NormalTok{(}\OperatorTok{~}\KeywordTok{garch}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{), }\DataTypeTok{data=}\NormalTok{df}\OperatorTok{$}\NormalTok{return, }\DataTypeTok{trace=}\OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(garch)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Title:
+##  GARCH Modelling 
+## 
+## Call:
+##  garchFit(formula = ~garch(2, 2), data = df$return, trace = FALSE) 
+## 
+## Mean and Variance Equation:
+##  data ~ garch(2, 2)
+## <environment: 0x7f81293841f0>
+##  [data = df$return]
+## 
+## Conditional Distribution:
+##  norm 
+## 
+## Coefficient(s):
+##         mu       omega      alpha1      alpha2       beta1       beta2  
+## 3.1522e-04  2.6470e-06  1.2701e-02  1.2445e-01  5.5700e-01  2.8875e-01  
+## 
+## Std. Errors:
+##  based on Hessian 
+## 
+## Error Analysis:
+##         Estimate  Std. Error  t value Pr(>|t|)    
+## mu     3.152e-04   1.530e-04    2.060  0.03943 *  
+## omega  2.647e-06   5.786e-07    4.575 4.76e-06 ***
+## alpha1 1.270e-02   1.298e-02    0.978  0.32793    
+## alpha2 1.245e-01   2.060e-02    6.040 1.54e-09 ***
+## beta1  5.570e-01   1.718e-01    3.241  0.00119 ** 
+## beta2  2.887e-01   1.575e-01    1.834  0.06669 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Log Likelihood:
+##  10489.13    normalized:  3.127351 
+## 
+## Description:
+##  Thu Jun  7 14:40:31 2018 by user:  
+## 
+## 
+## Standardised Residuals Tests:
+##                                 Statistic p-Value     
+##  Jarque-Bera Test   R    Chi^2  238.1684  0           
+##  Shapiro-Wilk Test  R    W      0.9892104 2.722248e-15
+##  Ljung-Box Test     R    Q(10)  22.1942   0.01414527  
+##  Ljung-Box Test     R    Q(15)  32.07282  0.006292776 
+##  Ljung-Box Test     R    Q(20)  38.11685  0.00856893  
+##  Ljung-Box Test     R^2  Q(10)  6.155105  0.8020679   
+##  Ljung-Box Test     R^2  Q(15)  9.255884  0.8637624   
+##  Ljung-Box Test     R^2  Q(20)  12.06721  0.9137434   
+##  LM Arch Test       R    TR^2   6.430372  0.8928536   
+## 
+## Information Criterion Statistics:
+##       AIC       BIC       SIC      HQIC 
+## -6.251124 -6.240180 -6.251130 -6.247210
+\end{verbatim}
+
+While the ARCH(11) did a good job at modeling the S\&P returns, it
+contains 12 parameters to estimate. So we can also fit a GARCH model to
+achieve similar (better?) results with less computing. The chosen model
+is GARCH(2,2). Its coefficients are statistically significant besides
+the alpha1, and gets a higher log likelihood of 10487.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(garch}\OperatorTok{@}\NormalTok{residuals, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(2,2) Residuals"}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{(garch}\OperatorTok{@}\NormalTok{residuals, }\DataTypeTok{main=}\StringTok{"ACF - GARCH(2,2) Residuals"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+The ACF and PACF of the GARCH(2,2) residuals also suggest that the model
+effectively captured the volatile behavior.
+
+\subsection{Problem 14.4}\label{problem-14.4}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# One and two step ahead forecasts}
+\NormalTok{predicts <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(garch, }\DataTypeTok{n.ahead=}\DecValTok{2}\NormalTok{, }\DataTypeTok{plot=}\OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predicts}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   meanForecast   meanError standardDeviation lowerInterval upperInterval
+## 1 0.0003152196 0.008928532       0.008928532   -0.01718438    0.01781482
+## 2 0.0003152196 0.008387256       0.008387256   -0.01612350    0.01675394
+\end{verbatim}
+
+\subsection{Textbook B}\label{textbook-b}
+
+\subsection{Problem 14.1}\label{problem-14.1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{## a}
+\KeywordTok{getSymbols}\NormalTok{(}\StringTok{"^NYA"}\NormalTok{, }\DataTypeTok{from=}\StringTok{"1988-01-01"}\NormalTok{, }\DataTypeTok{to=}\StringTok{"2001-12-31"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "NYA"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{nyse <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{log}\NormalTok{(NYA}\OperatorTok{$}\NormalTok{NYA.Adjusted) }\OperatorTok{-}\StringTok{ }\KeywordTok{log}\NormalTok{(}\KeywordTok{lag}\NormalTok{(NYA}\OperatorTok{$}\NormalTok{NYA.Adjusted))[}\OperatorTok{-}\DecValTok{1}\NormalTok{])}
+\NormalTok{nyse <-}\StringTok{ }\NormalTok{tibble}\OperatorTok{::}\KeywordTok{rownames_to_column}\NormalTok{(nyse) }\OperatorTok{%>%}
+\StringTok{  }\KeywordTok{set_names}\NormalTok{(}\StringTok{"date"}\NormalTok{, }\StringTok{"return"}\NormalTok{)}
+
+\NormalTok{train <-}\StringTok{ }\NormalTok{nyse[}\DecValTok{1}\OperatorTok{:}\DecValTok{3461}\NormalTok{, ]}
+\NormalTok{test <-}\StringTok{ }\NormalTok{nyse[}\DecValTok{3462}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(nyse), ]}
+
+\NormalTok{ts <-}\StringTok{ }\KeywordTok{ts}\NormalTok{(train}\OperatorTok{$}\NormalTok{return)}
+\NormalTok{ts_test <-}\StringTok{ }\KeywordTok{ts}\NormalTok{(test}\OperatorTok{$}\NormalTok{return)}
+
+\CommentTok{# Plot}
+\KeywordTok{ggplot}\NormalTok{(train, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\KeywordTok{seq}\NormalTok{(}\DataTypeTok{from=}\DecValTok{1}\NormalTok{, }\DataTypeTok{to=}\KeywordTok{length}\NormalTok{(return)), }\DataTypeTok{y=}\NormalTok{return, }\DataTypeTok{group=}\DecValTok{1}\NormalTok{)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{color=}\StringTok{"green"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"NYSE Daily Returns"}\NormalTok{, }\StringTok{"1988-2001"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Index"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Rate"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# AR}
+\NormalTok{m =}\StringTok{ }\KeywordTok{auto.arima}\NormalTok{(ts)}
+\KeywordTok{summary}\NormalTok{(m)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Series: ts 
+## ARIMA(5,0,3) with non-zero mean 
+## 
+## Coefficients:
+##          ar1     ar2      ar3     ar4      ar5      ma1      ma2     ma3
+##       0.8503  0.3857  -0.6647  0.0736  -0.0526  -0.8023  -0.4509  0.6292
+## s.e.  0.1601  0.2409   0.1552  0.0244   0.0232   0.1599   0.2360  0.1454
+##        mean
+##       4e-04
+## s.e.  1e-04
+## 
+## sigma^2 estimated as 7.241e-05:  log likelihood=11590.62
+## AIC=-23161.25   AICc=-23161.18   BIC=-23099.75
+## 
+## Training set error measures:
+##                        ME        RMSE        MAE MPE MAPE      MASE
+## Training set -1.62577e-06 0.008498468 0.00598073 NaN  Inf 0.7023232
+##                       ACF1
+## Training set -0.0001363117
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{resids <-}\StringTok{ }\NormalTok{m}\OperatorTok{$}\NormalTok{residuals[}\DecValTok{13}\OperatorTok{:}\KeywordTok{length}\NormalTok{(m}\OperatorTok{$}\NormalTok{residuals)]}
+
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{(resids)}
+\KeywordTok{pacf}\NormalTok{(resids)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-12-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{((resids)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{((resids)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-12-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# GARCH}
+\NormalTok{garch <-}\StringTok{ }\KeywordTok{garchFit}\NormalTok{(}\OperatorTok{~}\KeywordTok{garch}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{), }\DataTypeTok{data=}\NormalTok{resids, }\DataTypeTok{trace=}\OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(garch)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Title:
+##  GARCH Modelling 
+## 
+## Call:
+##  garchFit(formula = ~garch(1, 2), data = resids, trace = FALSE) 
+## 
+## Mean and Variance Equation:
+##  data ~ garch(1, 2)
+## <environment: 0x7f812d139d80>
+##  [data = resids]
+## 
+## Conditional Distribution:
+##  norm 
+## 
+## Coefficient(s):
+##         mu       omega      alpha1       beta1       beta2  
+## 1.0776e-04  6.8337e-07  5.1809e-02  9.1626e-01  2.4135e-02  
+## 
+## Std. Errors:
+##  based on Hessian 
+## 
+## Error Analysis:
+##         Estimate  Std. Error  t value Pr(>|t|)    
+## mu     1.078e-04   1.213e-04    0.889  0.37420    
+## omega  6.834e-07   2.300e-07    2.971  0.00297 ** 
+## alpha1 5.181e-02   1.020e-02    5.082 3.74e-07 ***
+## beta1  9.163e-01   1.545e-01    5.930 3.03e-09 ***
+## beta2  2.414e-02   1.489e-01    0.162  0.87123    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Log Likelihood:
+##  11860.31    normalized:  3.438768 
+## 
+## Description:
+##  Thu Jun  7 14:40:37 2018 by user:  
+## 
+## 
+## Standardised Residuals Tests:
+##                                 Statistic p-Value  
+##  Jarque-Bera Test   R    Chi^2  5229.4    0        
+##  Shapiro-Wilk Test  R    W      0.9595893 0        
+##  Ljung-Box Test     R    Q(10)  10.20268  0.4228949
+##  Ljung-Box Test     R    Q(15)  15.18456  0.4382065
+##  Ljung-Box Test     R    Q(20)  18.0473   0.584292 
+##  Ljung-Box Test     R^2  Q(10)  3.603135  0.9634799
+##  Ljung-Box Test     R^2  Q(15)  5.478519  0.9872411
+##  Ljung-Box Test     R^2  Q(20)  6.373636  0.9982896
+##  LM Arch Test       R    TR^2   4.75903   0.9655469
+## 
+## Information Criterion Statistics:
+##       AIC       BIC       SIC      HQIC 
+## -6.874637 -6.865728 -6.874642 -6.871455
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\KeywordTok{acf}\NormalTok{((garch}\OperatorTok{@}\NormalTok{residuals)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\KeywordTok{pacf}\NormalTok{((garch}\OperatorTok{@}\NormalTok{residuals)}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-12-4.pdf}
+
+\subsection{Problem 14.4}\label{problem-14.4-1}
+
+\subsubsection{a)}\label{a}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ar5 <-}\StringTok{ }\KeywordTok{arma}\NormalTok{(ts, }\DataTypeTok{order=}\KeywordTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{,}\DecValTok{0}\NormalTok{))}
+\KeywordTok{plot}\NormalTok{(ar5}\OperatorTok{$}\NormalTok{fitted.values)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+\subsubsection{b)}\label{b}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{smooth <-}\StringTok{ }\KeywordTok{ets}\NormalTok{(ts, }\DataTypeTok{model=}\StringTok{"ANN"}\NormalTok{, }\DataTypeTok{alpha=}\FloatTok{0.10}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(smooth)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\subsubsection{c)}\label{c}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{garch11 <-}\StringTok{ }\KeywordTok{garchFit}\NormalTok{(}\OperatorTok{~}\KeywordTok{garch}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{), }\DataTypeTok{data=}\NormalTok{ts, }\DataTypeTok{trace=}\OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(garch11, }\DataTypeTok{which=}\DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{homework_5_markdown_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\subsubsection{d)}\label{d}
+
+For the most part, visually these models all look very similar. However
+the ARCH and GARCH model's are based on actual time dependence as
+opposed to the mathematical strategies used in exponential smoothing.
+This means that the GARCH's smoothing parameter is chosen through
+likelihood optimization, whereas we just chose an arbitrary value for
+the ets model.
+
+\subsection{Problem 14.5}\label{problem-14.5}
+
+\subsubsection{a)}\label{a-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spec <-}\StringTok{ }\KeywordTok{garchSpec}\NormalTok{(}\DataTypeTok{model=}\KeywordTok{list}\NormalTok{(}\DataTypeTok{mu=}\DecValTok{76}\NormalTok{, }\DataTypeTok{alpha=}\FloatTok{0.6}\NormalTok{, }\DataTypeTok{beta=}\DecValTok{0}\NormalTok{, }\DataTypeTok{omega=}\DecValTok{3}\NormalTok{))}
+\NormalTok{sim <-}\StringTok{ }\KeywordTok{garchSim}\NormalTok{(spec, }\DataTypeTok{n=}\DecValTok{100}\NormalTok{)}
+
+\NormalTok{fit <-}\StringTok{ }\KeywordTok{garchFit}\NormalTok{(}\OperatorTok{~}\KeywordTok{garch}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{), sim, }\DataTypeTok{trace=}\OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{predict}\NormalTok{(fit, }\DataTypeTok{n.ahead=}\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    meanForecast meanError standardDeviation
+## 1      76.19167  1.854680          1.854680
+## 2      76.19167  2.051320          2.051320
+## 3      76.19167  2.163883          2.163883
+## 4      76.19167  2.230583          2.230583
+## 5      76.19167  2.270807          2.270807
+## 6      76.19167  2.295304          2.295304
+## 7      76.19167  2.310307          2.310307
+## 8      76.19167  2.319526          2.319526
+## 9      76.19167  2.325203          2.325203
+## 10     76.19167  2.328703          2.328703
+\end{verbatim}
+
+\subsubsection{b)}\label{b-1}
+
+\subsubsection{c)}\label{c-1}
+
+Answer is not necessarily. Because a GARCH model is based on the time
+dependence of volatility and is short term, in order to predict a next
+spell of bad weather that bad weather would have already needed to
+start.
+
+
+\end{document}

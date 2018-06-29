@@ -1,0 +1,514 @@
+---
+title: "ECON 144 - Homework 1"
+author: Noah Kawasaki
+date: 3-11-18
+output:
+  rmarkdown::html_document:
+    theme: spacelab
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir='/Users/noahkawasaki/Desktop/ECON 144/Textbook_data')
+```
+
+## Packages
+``` {r set_up, message=FALSE, results='hide'}
+library(tidyverse)
+library(DAAG)
+library(data.table)
+library(openxlsx)
+library(leaps)
+library(reshape2)
+library(car)
+library(corrplot)
+library(gtable)
+require(cowplot)
+library('readxl')
+library(zoo)
+```
+
+## Problem 1  
+For this problem we follow the study by Lalonde (1986) on earnings related to various factors such as training, race, gender, etc. The data are available directly from the DAAG package (the data file is nsw74psid1). Your task will be to fit a multiple regression model of the form yˆ = β0 + β1x1 + β2x2 + β3x3 + ···, where yˆ = real earnings in 1978 (re78), and for the predictors, you will need to decide which ones to keep. The complete assignment needs to be typed, include all the plots, and the R source code as well.
+
+
+#### Load data
+```{r}
+df <- nsw74psid1
+attach(df)
+head(df)
+```
+
+```{r}
+summary(df)
+```
+
+
+#### (a) Plot a histogram of each variable and discuss its properties.
+##### Binary variables
+```{r, message=FALSE, warning=FALSE}
+b1 <- ggplot(data=df) +
+  geom_bar(mapping=aes(x=black), fill='#3796db') +
+  ggtitle('Black') 
+
+b2 <- ggplot(data=df) +
+  geom_bar(mapping=aes(x=hisp), fill='#3796db') +
+  ggtitle('Hispanic')
+
+b3 <- ggplot(data=df) +
+  geom_bar(mapping=aes(x=marr), fill='#3796db') +
+  ggtitle('Married')
+
+b4 <- ggplot(data=df) +
+  geom_bar(mapping=aes(x=nodeg), fill='#3796db') +
+  ggtitle('No Degree')
+
+plot_grid(b1, b2, b3, b4, nrow=1)
+```
+
+These binary variables each show whether a participant is or is not some characteristic. We can see that, for the most part, this sample of data is not even with respect to these characteristics These observations are weighted towards non black, non hispanic, married, and no degree participants (in relation to each variables other value). This could present an issue with making generalizations to the population because the sample is disproportionately weighted in these particular value frequencies.
+
+
+##### Continuous variables - Age and Education
+```{r, message=FALSE, warning=FALSE}
+c1 <- ggplot(data=df) +
+  geom_histogram(mapping=aes(x=age), binwidth=1, fill='#3796db') +
+  ggtitle("Age Distribution")
+
+c2 <- ggplot(data=df) +
+  geom_histogram(mapping=aes(x=educ), binwidth=, fill='#3796db') +
+  ggtitle("Years of Education Distribution")
+
+plot_grid(c1, c2, nrow=1)
+```
+
+The age distribution tells us that most observations are people between early twenties and thirties, and then between 40 and 50 years of age. This distribution has two peaks, so it is not normally distributed and we should keep this in mind for average metrics or summarizing results. The years of education distribution tells us that for any single value, 12 years is the highest proportion. This makes sense because this is the  mandatory 12 years of education from finishing high school. There is a longer tail on the left than the right, which suggests that there is more variation to having less than a high school degree than there is in having more.
+
+
+##### Continuous variables - Real Earnings
+```{r, message=FALSE, warning=FALSE}
+c3 <- ggplot(data=df) +
+  geom_histogram(mapping=aes(x=re74), fill='#3796db', bins=40) +
+  xlim(0, 150000) +
+  ggtitle('Real Earnings 1974') +
+  xlab(NULL)
+
+c4 <- ggplot(data=df) +
+  geom_histogram(mapping=aes(x=re75), fill='#3796db', bins=40) +
+  xlim(0, 150000) +
+  ggtitle('Real Earnings 1975') +
+  xlab(NULL)
+
+c5 <- ggplot(data=df) +
+  geom_histogram(mapping=aes(x=re78), fill='#3796db', bins=40) +
+  xlim(0, 150000) +
+  ggtitle('Real Earnings 1978') +
+  xlab(NULL)
+
+plot_grid(c3, c4, c5, ncol=1)
+```
+
+The real earnings variables all show somewhat similar distributions with a positive skew. These are characteristic of most income distributions we would expect, because a small percentage of people may earn significantly higher salaries with wider ranges than most of the population. 
+
+
+#### (b) Estimate your full regression model yˆ = β0 + β1x1 + β2x2 + β3x3 + and show/discuss your results.
+```{r, message=FALSE, warning=FALSE}
+linreg <- lm(re78~trt+(age+educ+re74+re75)+(black+hisp+marr+nodeg))
+summary(linreg)
+```
+Here we have the summary of our initial linear regression model with all coefficients included. Right away, we can notice some abnormal numbers. The binary variables all have large coefficients, standard errors, and t values and p values that would suggest that they are not statistically significant at a 95% level. This could be explained with what we saw earlier from the disproportionate class membership for binary variables. On the other hand, age, educ, re74, and re75 show smaller standard errors and t values and p values that suggest they should be kept in a model. The Adjusted R^2^ score is 0.585, which seems reasonable for right now. The F-statistic strongly indicates that *some* of these variables are significant.
+
+
+#### (c) Compute the Mallows CP statistic for all the plausible models and choose only one model. Discuss why you chose this model. For the next questions, only use your selected model from this part.
+
+##### Subsets for all variables
+```{r, message=FALSE, warning=FALSE, results='hide'}
+subsets <- regsubsets(re78~trt+(age+educ+re74+re75)+(black+hisp+marr+nodeg), 
+                      method=c("exhaustive"), nbest=3, data=df)
+
+subsets(subsets, statistic="cp", legend=F, main="Mallows CP", col="steelblue4", 
+        min.size=1, max.size=8, cex.subsets=1)
+```
+
+
+I will focus on subset sizes of 3 to 5 to narrow down my decision.
+```{r, message=FALSE, warning=FALSE, results='hide'}
+subsets(subsets, statistic="cp", legend=F, main="Mallows CP (Size 3-5)", col="steelblue4", 
+        min.size=3, max.size=5, cex.subsets=1)
+```
+
+From this, I could either choose a three variable model with educ, re74, and re75 or a four variable model with the addition of age. For the purpose of this assignment, I am going to assume that the additional decrease in the Mallows CP statistic of adding age will be beneficial and choose the second model to continue:
+
+
+##### New Linear Model
+```{r}
+lr <- lm(re78~age+educ+re74+re75)
+summary(lr)
+```
+
+Here our new model looks better than the first one. The coefficients seem reasonable for the most part, and the t values and p values indicate statistical significance. The Adjusted R^2^ did not change much, however. Also note that age has a negative sign, which may seem a little odd and could be investigated more. Years of education on average associates with a $536 increase in yearly earnings, which seems reasonable.
+
+
+#### (d) Plot the residuals vs. the fitted values.
+```{r}
+ggplot(data=df, mapping=aes(x=lr$fitted.values, y=lr$residuals)) +
+  geom_point(color='#3796db', alpha=0.7) +
+  geom_abline(intercept=0, slope=0, color='red') +
+  ggtitle('Residuals vs Fitted Values') +
+  xlab('Fitted Values') +
+  ylab('Residuals')
+```
+
+This plot is concerning, we would ideally like to see these residuals randomly scattered about and not have such a dense cluster. This suggests that we should reconsider a transformation on our model like a log to improve this.
+  
+  
+#### (e) Plot and discuss the VIF plot.
+```{r, message=FALSE, warning=FALSE}
+vars <- c('age', 'educ', 're74', 're75')
+vif_lr <- vif(lr)
+d <- data.frame(vars, vif_lr)
+
+ggplot(d, aes(vars, vif_lr)) + 
+  geom_col(fill='#3796db') +
+  ylim(0, 4) +
+  geom_abline(intercept=4, slope=0, color='black', alpha=0.8, linetype='dashed') +
+  ggtitle('Variance Inflation Factors of Regressors') +
+  xlab('Regressors') +
+  ylab('Variance Inflation Factor')
+```
+
+The Variance Inflation Factor is used to measure how much variance of a regressor is increased due to multicollinearity. Here we can see that all VIF scores are below 4, but re74 and re75 are noticeably higher. This is not too concerning, and intuitively makes sense. It is reasonable to observe that earnings between one year and the next will be correlated if someone remains in the same position. Because the VIF's are still below 4, I will move on.
+
+
+#### (f) Plot and discuss the correlation graph
+```{r}
+# Subset dataframe to variables of interest
+df_2 <- df[vars]
+corr <- melt(cor(df_2))
+
+ggplot(data=corr, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  geom_text(aes(label=round(value, 2))) +
+  ggtitle('Correlation of Regressors') +
+  xlab('Regressor 1') +
+  ylab('Regressor 2')
+```
+
+Our correlation graph gives expected numbers. Real earnings between 1974 and 1975 show a high 0.86 correlation while other variables are lower. We also must note that age and education have a negative correlation. From our regression summary, we had a positive sign on years of education and a negative sign on age, so in that context it makes sense. However I would expect older people to have higher earnings, and thus a positive correlation with age. This analysis could be result of the sampling, a generation difference in employment types, or some other force that could be explored further. 
+
+
+#### (g) Plot the Cook’s Distance values. Are there any outliers? If so, discuss what you would do with them.
+```{r}
+lr_cooks <- cooks.distance(lr)
+plot(lr_cooks, ylab="Cook's distance", type='o', main="Cook's Distance", 
+     col="#3796db", pch=20, lwd=.25)
+```
+     
+Cook's Distance is used to search for data points that may be influential in a regression estimate that might be considered for deeper investivation. It measures the effect of deleting an observation, so large values indicate a large influence. From our visualization, there are a few outliers, with one in particular being around 0.35. These points could be investigated by observation to see whether the value is due to an error in data entry, or actually just an extreme case. Potential actions on these could be to ignore them, completely remove them, or impute median/mean values to make them fit. (Whichever option one chooses would be disclosed to any audience of this project)
+
+
+#### (h) Plot a histogram of the residuals and discuss the results.
+(I prefer a density plot for this particular one)
+```{r}
+ggplot(data=df) +
+  geom_density(mapping=aes(x=lr$residuals), fill='#3796db') + 
+  ggtitle('Residuals Density') +
+  xlab('Residuals') +
+  ylab('Count')
+
+```
+
+Our residuals look to be somewhat symmetrically distributed around zero. We can notice that it is skinny, thus having a higher kurtosis than Normal distributions. This aligns with infrequent extreme deviations from the mean as opposed to more frequent but modest deviations. The residuals and fitted values scatterplot and the Cook's Distance plot both align with this distribution shape.
+
+
+#### (i) Plot the QQ Normal Plot and discuss the results.
+```{r}
+ggplot(data=df) +
+  geom_qq(mapping=aes(sample=lr$residuals), alpha=0.6, color='#3796db') +
+  ggtitle('QQ Normal Plot') +
+  ylab('Sample Quantiles') +
+  xlab('Theoretical Quantiles')
+```
+
+The QQ Normal plot is a visual check used to decide whether our data is normally distributed. If our residual distribution was Normal, we would see a roughly straight line. From this, we can observe that values close to zero are straight, but as we get farther away they begin to deviate. These deviations correspond to the extreme values we saw earlier, and that our residuals have more extreme deviations than expected in a Normal distribution. 
+
+
+#### (j) Plot the observed vs. predicted values, overlay a Lowess smoother, and discuss the results.
+```{r, warning=FALSE, message=FALSE}
+ggplot(data=df_2, mapping=aes(lr$fit, re78)) +
+  geom_point(alpha=0.7, na.rm=TRUE) +
+  geom_smooth(method='loess', color='#3796db') +
+  geom_abline(color='red', linetype='dashed', alpha=0.6) +
+  xlim(0, 90000) +
+  ggtitle('Observed vs Predicted Response') +
+  xlab('Predicted Response') +
+  ylab('Observed Response') 
+```
+
+From this plot we can reaffirm what has been said earlier. There is a cluster of dense points from 0-40000 where our points lie closely around the Lowess smoother, indicating that this range of values was somewhat well modeled. We also notice in this range the extreme deviations being underpredicted (lying above the line) and some being overpredicted (lying below the line). There is also a band of observed responses at the horizontal line of zero, corresponding to people with zero earnings in 1978. This may be a place to look at the DGP and whether these observations should be kept. From 40000-70000 there are much less observations to be seen, and they exhibit a larger variance than the points to its left. Outside of 70000 our observations sparse and mostly underpredicted. 
+
+From this graph and problem overall we can see that the linear model did not do as good a job as possible, and transforming our data will likely improve modeling metrics. 
+
+
+
+## Textbook Questions
+
+### Problem 2.2
+Download the US GDP quarterly growth rates and the S&P 500 quarterly returns. For both series, compute their descriptive statistics and their histograms. Are these two series contemporaneously correlated? Comment on your findings.
+```{r}
+growth_rates <- read.xlsx("Chapter2_exercises_data.xlsx", sheet=1)
+summary(growth_rates)
+```
+
+From this summary there a notable differences. GRGDP has a smaller range of values [-3, 4] while RETURN has [-27, 20]. GRGDP has a mean closer to zero, and RETURN has a mean around 2. Both series have medians near their means so skewness should not be too much of an issue. 
+
+
+```{r}
+g <- ggplot(data=growth_rates) +
+  geom_histogram(mapping=aes(x=GRGDP), fill='#3796db', bins=40) +
+  geom_vline(xintercept=0, linetype='dashed') +
+  ggtitle('US Growth Rate') +
+  xlab(NULL) +
+  ylab('Count')
+
+r <- ggplot(data=growth_rates) +
+  geom_histogram(mapping=aes(x=RETURN), fill='#3796db', bins=40) +
+  ggtitle('S&P 500 Returns') +
+  geom_vline(xintercept=0, linetype='dashed') +
+  xlab(NULL) +
+  ylab('Count')
+
+plot_grid(g, r, ncol=1)
+```
+
+Again, we can see that the US GDP growth rate is near 1, so its overall trend consistently been positive growth. We would expect that stock market returns would also follow this. However, the S&P 500 returns are centered around 0, so while the US total GDP has been mostly rising, the S&P 500 returns have stayed constant. This suggests that GDP growth and stock market returns are not necessarily correlated.
+
+
+### Problem 3.1
+Download monthly data on real personal consumption expenditures and real disposable personal income from FRED.
+```{r}
+df31_temp <- read.xlsx("Chapter3_exercises_data.xlsx", sheet=1, detectDates=TRUE)[,1:3]
+```
+
+
+#### (a) Calculate and plot growth rates. Compare the level of volatility. Can you explain this with your knowledge of macroeconomics? (*permanent income model*)
+```{r}
+df31 <- df31_temp %>%
+  mutate(
+    rpce_growth=log(rpce)-log(lag(rpce)),
+    rdpi_growth=log(rdpi)-log(lag(rdpi)),
+    rdpi_growth_lag=lag(rdpi_growth)
+  )
+
+p1 <- ggplot(data=df31) +
+  geom_line(mapping=aes(date, y=rdpi_growth), color='green', na.rm=TRUE) +  
+  geom_abline(intercept=0, slope=0) +
+  ylim(-0.05, 0.05) +
+  ggtitle('Income Growth Over Time') +
+  xlab('Year') +
+  ylab('Growth %')
+
+p2 <- ggplot(data=df31) +
+  geom_line(mapping=aes(date, y=rpce_growth), color='red', na.rm=TRUE) +
+  geom_abline(intercept=0, slope=0) +
+  ylim(-0.05, 0.05) +
+  ggtitle('Expenditure Growth Over Time') +
+  xlab('Year') +
+  ylab('Growth %')
+
+plot_grid(p1, p2, ncol=1)
+```
+
+The expenditure growth rate is overall less volatile compared to the income growth rate. The permanent income model relates to this phenomenon by postulating that current and expected future income levels (together lifetime income) drives consumption (expenditure) patterns, but is smoothed over time. So if someone has an increase in income, they will smooth that gain over their lifetime and not spend it proportionally immediately. Thus in this example, one would change their consumption in magnitude less in response to an the income change. This data is evidence of the permanent income hypothesis.
+
+
+#### (b) Regress consumption growth on disposable income growth and discuss.
+```{r}
+lr_growth <- lm(rpce_growth~rdpi_growth, data=df31)
+summary(lr_growth)
+```
+
+This summary says that a disposable income growth expects a positive change in consumption. The t values and p values suggest statistical significance, so at the 95% level income growth appears to positively drive expenditure. This R^2^ score is also very low, meaning that our independent variable of income growth only accounts for 5% of total variation. Our coefficient of rdpi_growth means that a 1% growth in income is expected to give a 0.17% growth in consumption. Because 0.17% < 1%, this aligns with the permanent income hypothesis.
+
+
+#### (c) Add a lag of disposable income growth as a parameter to your model and comment on the possiblity of a lag in consumption growth.
+```{r}
+lr_growth_lag <- lm(rpce_growth~rdpi_growth+rdpi_growth_lag, data=df31)
+summary(lr_growth_lag)
+```
+
+With the lagged consumption growth we do see a small increase in the rdpi_growth coefficient, as well as a positive coefficient for the lag parameter. The actual coefficient of rdpi_growth_lag means that a 1% increase in income in the previous period is expected to give a 0.08% increase in consumption in the current period. The t values and p values of the intercept and the rdpi_growth variable remain to suggest significance, but the lagged parameter is just passing by at the 95% significance level. This finding does not present *strong* evidence that last periods growth in income has a significant effect on consumption pattern, which coincides with the permanent income hypothesis. Also, the Adjusted R^2^ rose to 0.062, but this increase is not notably large.
+
+
+### PROBLEM 3.3
+Download this data. For each data set, plot the time series, write the exact definition, periodicity, and units. Judge whether the underlying stochastic process may be first and second order weakly stationary. Explain.
+
+##### Load data and compute means for visualizations
+```{r}
+us_real_gdp <- read.xlsx("Chapter3_exercises_data.xlsx", sheet=3, detectDates=TRUE)[,1:2]
+us_real_gdp_mean <- mean(us_real_gdp$rgdp)
+
+exchange_rate <- read.xlsx("Chapter3_exercises_data.xlsx", sheet=4, detectDates=TRUE)[,1:2]
+exchange_rate_mean <- mean(exchange_rate$jpy_usd)
+
+maturity_yield <- read.xlsx("Chapter3_exercises_data.xlsx", sheet=5, detectDates=TRUE)[,1:2]
+maturity_yield_mean <- mean(maturity_yield$CMRate10Yr, na.rm=TRUE)
+
+unemployment <- read.xlsx("Chapter3_exercises_data.xlsx", sheet=6, detectDates=TRUE)[,1:2]
+unemployment_mean <- mean(unemployment$unemrate)
+```
+
+
+##### Plot Time Series
+##### US Real GDP
+```{r}
+ggplot(data=us_real_gdp, mapping=aes(date, rgdp)) +
+  geom_line(color='#3796db', lwd=1) +
+  geom_hline(yintercept=us_real_gdp_mean, linetype='dashed') +
+  ggtitle('US Real GDP') +
+  xlab('Year') +
+  ylab('RGDP')
+```
+
+**Definition**: Value of goods and services produced in the US adjusted for inflation.  
+**Periodicity**: Quarters, 1947-2012.  
+**Units**: USD billions chain weighted.  
+**Stationary**: There is a clear upward trend with some small local dips and peaks, so this time series is not first (second) order weakly stationary.
+
+
+##### Exchange Rate of Yen vs USD
+```{r}
+ggplot(data=exchange_rate, mapping=aes(DATE, jpy_usd)) +
+  geom_line(color='#3796db', lwd=1) +
+  geom_hline(yintercept=exchange_rate_mean, linetype='dashed') +
+  ggtitle('Exchange Rate of Yen vs USD') +
+  xlab('Year') +
+  ylab('Rate')
+```
+
+**Definition**: The value of yen (foreign currency) that is equal to 1 USD.  
+**Periodicity**: Monthly, 1971-01-04 to 2012-06-01.  
+**Units**: Rate of Yen to 1 USD.  
+**Stationary**: There is a clear downward trend with some small and moderate local dips and peaks, so this time series is also not first (second) order weakly stationary.
+
+
+##### 10-year Treasury constant maturity yield
+```{r}
+# Removing zero values under assumption that these should be NA.
+maturity_yield[maturity_yield==0] <- NA
+
+ggplot(data=maturity_yield, mapping=aes(DATE, CMRate10Yr)) +
+  geom_line(color='#3796db', lwd=1) +
+  geom_hline(yintercept=maturity_yield_mean, linetype='dashed') +
+  ggtitle('10-year Treasury Constant Maturity Yield') +
+  xlab('Rate') +
+  ylab('Year')
+
+```
+
+**Definition**: Yields on actively traded non-inflation-indexed issues adjusted to constant maturities.  
+**Periodicity**: Daily, 1962-01-02 to 2012-06-07.  
+**Units**: Rate.  
+**Stationary**: This plot is less clear in respect to any trend. Before the mid 1980's there is an upward trend, but after there is a downward trend. There is does not appear to be a meaningful mean of this series nor is there a seemingly constant degree of variance in the cycles. This series is doubtful to be first (second) order weakly stationary.
+
+
+##### US Unemployment Rate
+```{r}
+ggplot(data=unemployment, mapping=aes(DATE, unemrate)) +
+  geom_line(color='#3796db', lwd=1) +
+  geom_hline(yintercept=unemployment_mean, linetype='dashed') +
+  ggtitle('US Unemployment Rate') +
+  xlab('Year') +
+  ylab('Rate')
+```
+
+**Definition**: The percent of unemployed people over the labor force. The US Labor force includes those 16 years of age and up, not in institutions, not on active military duty, residing in the United States.  
+**Periodicity**: Monthly, 1948-01-01 to 2012-05-01.  
+**Units**: Rate.  
+**Stationary**: This plot has an overall upward trend, but does in fact fluctuate about the mean more than the previous series. It is  unclear if this is first order weakly stationary. Since the variances are more obviously not constant, I would be confident enough to at least claim that it is not second order weakly stationary. 
+
+
+### PROBLEM 4.3
+Compute the ACF and PACF functions of quarterly and annual frequencies of housing prices, interest rates, price growth, and interest rate growth. Comment on the differences in the autocorrelation functions. Which series has stronger time dependency? Compare across annual vs quarterly.
+```{r}
+annual_temp <- read_excel("Chapter4_exercises_data.xls", sheet=1)
+setnames(annual_temp, c('year', 'price', 'interest'))
+
+quarterly_temp <- read_excel("Chapter4_exercises_data.xls", sheet=2)
+setnames(quarterly_temp, c('quarter', 'price', 'interest'))
+
+annual <- annual_temp %>%
+  mutate(
+    price_growth=log(price)-log(lag(price)),
+    interest_growth=log(interest)-log(lag(interest))
+  )
+
+quarterly <- quarterly_temp %>%
+  mutate(
+    price_growth=log(price)-log(lag(price)),
+    interest_growth=log(interest)-log(lag(interest))
+  )
+```
+
+
+##### Compute ACF and PACF Functions
+##### Quarterly
+```{r}
+acf(quarterly$price, na.action=na.pass, main='Quarterly Price ACF')
+pacf(quarterly$price, na.action=na.pass, main='Quarterly Price PACF')
+```
+
+The ACF Price plot shows that each price value at current time t is correlated with itself at time t-1, and as the time series goes further back the autocorrelations become weaker. The PACF Price plot shows a strong correlation between time t and its immediate precedent value at t-1, but does not show correlation when we jump through time periods to t-h where h>1. 
+
+
+```{r}
+acf(quarterly$interest, na.action=na.pass, main='Quarterly Interest ACF')
+pacf(quarterly$interest, na.action=na.pass, main='Quarterly Interest PACF')
+```
+
+The ACF and PACF Interest plots show the similar results to above.
+
+
+```{r}
+acf(quarterly$price_growth, na.action=na.pass, main='Quarterly Price Growth ACF')
+pacf(quarterly$price_growth, na.action=na.pass, main='Quarterly Price Growth PACF')
+```
+
+Now, when we attempt to autocorrelate price growth, we observe different patterns. The Price Growth ACF plot suggests some correlation for about 9 periods lagged, and then after this time horizon there is little evidence for correlation. The Price Growth PACF plot shows three lines outside of the confidence interval, and none besides. So comparing price to price *growth rate*, we can see that price level differs significantly in its correlation across a time series.  
+
+
+```{r}
+acf(quarterly$interest_growth, na.action=na.pass, main='Quarterly Interest Growth ACF')
+pacf(quarterly$interest_growth, na.action=na.pass, main='Quarterly Interest Growth PACF')
+```
+
+The Interest Growth ACF plot shows a familiar pattern as before, but not that this is the ACF plot and the pattern here has previously resembled ACF plots. Interest growth is suggested to be less correlated with itself outside of 1 lagged period. Our final visual shows no autocorrelation between interest growth and other random time horizons. Overall, we saw that the price and interest show strong time dependency, and when considered against isolated t-h periods only 1 period lagged seemed to be time dependent. However, with the growth rates themselves we are less confident about time dependency.
+
+
+##### Annual
+```{r}
+acf(annual$price, na.action=na.pass, main='Annual Price ACF')
+pacf(annual$price, na.action=na.pass, main='Annual Price PACF')
+
+acf(annual$interest, na.action=na.pass, main='Annual Interest ACF')
+pacf(annual$interest, na.action=na.pass, main='Annual Interest PACF')
+
+acf(annual$price_growth, na.action=na.pass, main='Annual Price Growth ACF')
+pacf(annual$price_growth, na.action=na.pass, main='Annual Price Growth PACF')
+
+acf(annual$interest_growth, na.action=na.pass, main='Annual Interest Growth ACF')
+pacf(annual$interest_growth, na.action=na.pass, main='Annual Interest Growth PACF')
+```
+
+Comparing annual and quarterly frequencies, we observe mostly the same *general* patterns. On average the autocorrelation measures are lower and the horizons at which time dependency are strong are shorter in range. This means that the declines in the autocorrelations are happening faster for the annual frequency. Intuitively, this makes sense. As a year is a longer period, it is likely to be less correlated with its lagged self, and the absolute range in which values are time dependent expected to be shorter compared to a higher frequency.
+
+
+  
+
+
+
+
+
+
+
+

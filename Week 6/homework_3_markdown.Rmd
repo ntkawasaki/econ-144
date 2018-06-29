@@ -1,0 +1,167 @@
+---
+title: "Homework 3"
+author: "Noah Kawasaki"
+date: "5/8/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  echo=TRUE,
+  root.dir='/Users/noahkawasaki/Desktop/ECON 144/Textbook_data'
+  )
+```
+
+
+```{r, message=FALSE, results='hide', warning=FALSE}
+library(tidyverse)
+library(quantmod)
+library(tseries)
+library(forecast)
+library(data.table)
+library(readxl)
+library(ggplot2); theme_set(theme_grey())
+
+setwd('/Users/noahkawasaki/Desktop/ECON 144/Textbook_data')
+set.seed(5)
+```
+
+
+### Problem 6.4
+MA(2): $y_t = 0.7 - 2e_{t-1} + 1.35e_{t-2} + e_t$
+
+##### a) Obtain the theoretical autocorrelation up to lag 10
+$ρ_1 =\frac{(θ_1+θ_1θ_2)}{(1+θ_1^2 +θ_2)}=\frac{(-2+(-2)(1.35))}{(1+(−2)^2 +1.35)}= −0.740$  
+$ρ_2 = \frac{θ_2}{(1 + θ_1^2 + θ_2^2)} = \frac{1.35}{(1 + (−2)^2 + 1.35^2)} = 0.198$  
+$ρ_3 = ρ_4 =...=ρ_{10} =0$  
+
+##### b) 
+```{r}
+y = e = rnorm(100)
+for (t in 3:100) y[t] = 0.7 - 2*e[t-1] + 1.35*e[t-2] + e[t]
+
+# Plots and create objects
+acf <- acf(y, lag.max=10, main="Random MA(2) - ACF")
+pacf <- pacf(y, lag.max=10, main="Random MA(2) - PACF")
+```
+
+For this particular random sequence, we can see the sample ρ~1~ which is close to -0.740, and ρ~2~ which is close enough to 0.197. Both sample values have the same sign (Because these numbers are random, the sign may be negative when knitted). The difference between our sample values and the theoretical values is due to a small sample size. In terms of the visuals, we observe two significant spikes in the ACF and The PACF visual and a decay to zero in the PACF, which is characteristic of an MA(2) process.
+
+
+### Problem 6.10
+```{r, message=FALSE, warning=FALSE}
+getSymbols("CRM")
+
+ggplot(CRM, aes(x=Index)) +
+  geom_line(aes(y=CRM.Open, color='Observed Values'), color='green') +
+  ggtitle('Daily Opening Stock Prices', 'Salesforce') +
+  ylab('Price') +
+  xlab('Date')
+```
+
+
+```{r}
+# Returns
+returns <- log(CRM$CRM.Open) - log(lag(CRM$CRM.Open))[2:2856]
+
+ggplot(returns, aes(x=Index)) +
+  geom_line(aes(y=CRM.Open), color='green') +
+  geom_hline(yintercept=0, color='black', linetype='dashed') +
+  ggtitle('Salesforce Daily Returns', '2007-2018') +
+  ylab('Return') +
+  xlab('Date')
+
+acf(returns, main="Salesforce Returns - ACF")
+pacf(returns, main="Salesforce Returns - PACF")
+```
+
+From the returns plot we can see that the returns process appears have significant spikes at a lag of 1 for both the ACF and PACF. There are some other small significant spikes, which I will dismiss for the purpose of this homework assignment.
+
+
+```{r}
+ar1 <- arma(returns, c(1, 0))
+
+cols <- c("Observed Values"="green", "Fitted Values"="black")
+ggplot(returns, aes(x=Index)) +
+  geom_line(aes(y=CRM.Open, color='Observed Values')) +
+  geom_line(aes(y=ar1$fitted.values, color='Fitted Values'), na.rm=TRUE) +
+  ggtitle('Fitted Daily Returns', 'AR(1)') +
+  ylab('Return') +
+  xlab('Date') +
+  scale_color_manual("Legend", values=cols)
+```
+
+From this plot can see that the fitted values all fluctuate around zero as a stationary process. Therefore our forecasted returns will basically be 0 as the unconditional mean. So the price forecasts will be the same price as the day before, and follow a linear trend at 0.
+
+
+### Problem 7.2
+```{r}
+df <- read_excel("Chapter7_exercises_data.xls", sheet=1)
+setnames(df, c('date', 'unemployed'))
+
+ggplot(df, aes(x=date)) +
+  geom_line(aes(y=unemployed), color='green') +
+  ggtitle('Unemployed Persons', '1989-2012') +
+  ylab('Unemployed (thousands)') +
+  xlab('Date')
+
+df_acf <- acf(df$unemployed, main="Unemployment - ACF")
+df_pacf <- pacf(df$unemployed, main="Unemployment - PACF")         
+```
+
+The ACF plot shows high persistence, with the persistence parameter at 0.9906. Since it decays downward this suggests an autoregressive process. The PACF shows a significant spike at lag 1 with the same value at 0.9906 and then approximately zero afterwards. The PACF and ACF plots suggest an AR(1) process, but since the persistence parameter is so close to 1, we should also consider whether the process is covariance stationary in the first place (Looking at the time series plot, it is not). 
+
+
+### Problem 7.6
+```{r}
+df76 <- read_excel("Chapter7_exercises_data.xls", sheet=3)[-1,]
+setnames(df76, c("date", "housing_cpi", "housing_inf", "transp_cpi", "transp_inf"))
+
+map <- c("Housing"="red", "Transportation"="blue")
+ggplot(df76, aes(x=date)) +
+  geom_line(aes(y=housing_inf, color='Housing'), na.rm=TRUE) +
+  geom_line(aes(y=transp_inf, color='Transportation'), na.rm=TRUE) +
+  ggtitle("Housing and Transportation Inflation", "1967-2011") +
+  ylab("Rate") +
+  xlab("Date") +
+  scale_color_manual("Legend", values=map)
+```
+
+
+```{r}
+# Housing Inflation
+acf(df76$housing_inf, main="Housing Inflation - ACF")         
+pacf(df76$housing_inf, main="Housing Inflation - PACF")  
+```
+
+The housing inflation rates suggest the potential of an AR(2) process. There is a decay to zero at 6 lags in the ACF and two significant spikes at lags of 1 and 2 in the PACF. There is also a questionable spike at lag 3 which could be tested, and bring an AR(3) into consideration.
+
+
+```{r}
+# Transportation Inflation
+acf(df76$transp_inf, main="Transportation Inflation - ACF")         
+pacf(df76$transp_inf, main="Transportation Inflation - PACF") 
+```
+
+The transportation inflation shows weaker time dependence than the housing inflation series. The ACF decays to zero after just two lags. The PACF also only shows one significant spike. This could suggest an AR(1) model with a lower persistence parameter around 0.4.
+         
+        
+### Problem 7.7
+From question 6 we already computed the ACF and PACF functions of the housing and transportation inflation rates. We will continue by testing an AR(3) on housing inflation, and an AR(1) on the transportation inflation. 
+```{r}
+# Housing 
+housing <- arima(df76$housing_inf, c(3,0, 0))
+plot(forecast(housing, h=3))
+```
+
+We can see the 1, 2, and 3 step ahead forecasts for the housing series with an AR(3). Note how the error bands increase as we move farther away from our observed data. Because this plot only shows 3 steps ahead, and the model is an AR(3), we have predictions within our time dependence range. If we were to plot beyond 3, we would see the predictions converge to the unconditional mean.
+
+
+```{r}
+# Transportation
+transp <- arima(df76$transp_inf, c(1, 0, 0))
+plot(forecast(transp, h=3))
+```
+
+Here we have the 1, 2, and 3 step ahead forecasts for the transportation series with an AR(1). Note that the error bands here are already wider than the error bands for the housing forecasts. Since this is an AR(1) model, the second and third forecasts are already out of time dependence range and are converging to the unconditional main. To conclude, the AR(1) transportation series is more difficult to predict because there is less time dependence exhibited, so we can really only make data-driven forecasts at 1 step ahead before reverting to a constant guess.
+

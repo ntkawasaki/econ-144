@@ -1,0 +1,294 @@
+---
+title: "hw5"
+output: html_document
+---
+
+```{r}
+setwd("C:\\Users\\Matth\\Desktop\\Economic Forecasting\\R\\Week 10")
+rm(list=ls(all=TRUE))
+
+library(lattice)
+library(foreign)
+library(MASS)
+library(car)
+require(stats)
+require(stats4)
+library(KernSmooth)
+library(fastICA)
+library(cluster)
+library(leaps)
+library(mgcv)
+library(rpart)
+library(pan)
+library(mgcv)
+library(DAAG)
+library("TTR")
+library(tis)
+require("datasets")
+require(graphics)
+library("forecast")
+library(nlstools)
+library(fpp)
+library(strucchange)
+library(Quandl)
+library(zoo)
+library(PerformanceAnalytics)
+library(quantmod)
+library(vars)
+library(lmtest)
+library(dlnm)
+library(hts)
+library(tseries)
+library(rugarch)
+library(TSA)
+library(fGarch)
+library(pastecs)
+```
+
+```{r}
+
+
+#Setting up low persistence simulation
+spec <- ugarchspec(
+  variance.model = list(model = "sGARCH",
+                        garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(1,1), include.mean = TRUE),
+  distribution.model = "norm",
+  fixed.pars = c(mu = 2, ma1 = .2, ar1 = .3, omega = 2, alpha1 = .4, beta1 = .4))
+lowpersistence <- ugarchpath(spec, n.sim = 1000, n.start = 1)
+
+#Plotting time series
+plot(fitted(lowpersistence), type = "l")
+#Plotting conditional variance and conditional standard deviation
+sigma2_low <- (sigma(lowpersistence))^2
+plot(sigma(lowpersistence), type = "l")
+plot(sigma2_low, type = "l")
+
+#histogram of original time series and standardized time series
+hist(fitted(lowpersistence))
+#autocorrelograms of original time series, square of the series, standardized series, and square of the standardized series
+
+
+
+#Setting up high persistence simulation
+spec2 <- ugarchspec(
+  variance.model = list(model = "sGARCH",
+                        garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(0,1), include.mean = TRUE),
+  distribution.model = "norm",
+  fixed.pars = c(mu = 2, ma1 = .3, omega = 2, alpha1 = .1, beta1 = .88))
+highpersistence <- ugarchpath(spec2, n.sim = 1000, n.start = 1)
+
+#plotting time series
+plot(fitted(highpersistence), type = "l")
+
+#plotting conditional variance and standard deviation
+sigma2_high <- (sigma(highpersistence))^2
+plot(sigma(highpersistence), type = "l")
+plot(sigma2_high)
+
+#histogram of original time series and standardized time series
+hist(fitted(highpersistence))
+
+#autocorrelograms of original time series, square of the series, standardized series, and square of the standardized series
+
+```
+
+### Number 2, 14.3
+
+```{r}
+rm(list=ls(all=T))
+df <- read.csv("14_3data.csv")
+
+
+returns <- as.data.frame(diff(log(df$Adj.Close)))
+
+returns$returns2 <- (returns$`diff(log(df$Adj.Close))`)^2
+plot(returns$`diff(log(df$Adj.Close))`, type = "l")
+#Volatility was initially somewhat high, then volatility dropped to very low levels and remained constant for a while. Volatility then picked up and peaked at extremely high levels, and then went back down to medium levels where it remains.
+acf(returns$`diff(log(df$Adj.Close))`)
+pacf(returns$`diff(log(df$Adj.Close))`)
+acf(returns$returns2)
+pacf(returns$returns2)
+
+archmodel = ugarchspec(
+  variance.model = list(model ="sGARCH", garchOrder = c(9,0)),
+  mean.model = list(armaOrder = c(2,2), include.mean = TRUE),
+  distribution.model = "sstd")
+
+archmodel@model$pars
+
+modelfit=ugarchfit(spec=archmodel, data = returns$`diff(log(df$Adj.Close))`)
+
+plot(modelfit@fit[["residuals"]], type = "l")
+
+acf(modelfit@fit[["residuals"]])
+pacf(modelfit@fit[["residuals"]])
+
+
+```
+
+### Problem 3 14.4
+
+```{r}
+?ugarchforecast
+
+forecast <- ugarchforecast(modelfit, data = NULL, n.ahead = 2, n.roll = 0, out.sample = 0)
+#need to add confidence intervals 
+```
+
+
+(Removing conditional mean dynamics before modeling volatility dynamics) In
+the application in the text, we noted that NYSE stock returns appeared to have
+some weak conditional mean dynamics, yet we ignored them and proceeded
+directly to model volatility.
+a. Instead, first fit autoregressive models using the SIC to guide order selection,
+and then fit GARCH models to the residuals. Redo the entire empirical
+analysis reported in the text in this w^y, and discuss anv important differences
+in the results.
+b. Consider instead the simultaneous estimation of all parameters of AR(p)-
+GARCH models. That is, estimate regression models where the regressors are
+lagged dependent variables and die disturbances display GARCH. Redo the
+entire empirical analysis reported in the text in this way, and discuss any
+important differences in the results relative to those in the text and those
+obtained in part a. 
+
+### Problem 4 14.3 diebold
+
+```{r}
+rm(list=ls(all=TRUE))
+getSymbols("^NYA", from = "1988-01-01", to = "2001-12-31")
+
+adj.close <- NYA$NYA.Adjusted
+
+
+returns <- diff(log(adj.close))
+
+returns <- returns[-1,]
+returns2 <- returns^2
+returnsts <- as.ts(returns)
+returns2ts <- as.ts(returns2)
+returnszoo <- as.zoo(returns)
+returns2zoo <- returnszoo^2
+
+
+#plotting
+plot(returnszoo, type = "l")
+plot(returns2zoo, type = "l")
+
+hist(returnszoo)
+
+acf(returnsts, lag.max = 1000)
+pacf(returnsts, lag.max = 1000)
+auto.arima(returnszoo)
+
+
+
+m1 <- arima(returnszoo, order = c(1,0,0))
+m2 <- arima(returnsts, order = c(3,0,0))
+m3 <- arima(returnszoo, order = c(5,0,5))
+
+acf(m2$residuals, lag.max = 300)
+pacf(m2$residuals, lag.max = 300)
+
+acf(returns2ts)
+pacf(returns2ts)
+
+m4 <- auto.arima(returnsts)
+
+###continuing...
+
+m4residuals <- m4$residuals
+
+plot(m4residuals, type = "l")
+acf(m4residuals)
+pacf(m4residuals)
+#starting garch model
+
+model=ugarchspec(
+variance.model = list(model = "sGARCH", garchOrder = c(2, 2)),
+mean.model = list(armaOrder = c(5, 2), include.mean = TRUE),
+distribution.model = "sstd")
+
+modelfit=ugarchfit(spec=model,data=returnszoo)
+modelfit
+plot(modelfit)
+
+
+
+
+
+```
+
+
+
+
+
+4. (Direct modeling of volatility proxies) In the text, we fit an AR(5) directly to a
+subset of the squared NYSE stock returns. In this exercise, use the entire KYSE
+dataset.
+a. Construct, display, and discuss the fitted volatility series from the AR(5)
+model.
+b. Construct, display, and discuss an alternative fitted volatility series obtained by
+exponendal smoothing, using a smoothing parameter of 0.10, corresponding
+to a large amount of smoodting, but less than that done in the text.
+c. Construct, display, and discuss the volatility series obtained by fitting an
+appropriate GARCH model.
+d. Contrast the results of parts a, b, and c.
+e. Why is fitting of a GARCH model preferable in principle to die AR(5) or
+exponential smoothing approaches? 
+
+###Problem 4, 14.4 Diebold
+
+```{r}
+
+
+```
+
+5. (GARCH volatility forecasting) You work for Xanadu, a luxury resort in the
+tropics. The daily temperature in the region is beautiful year-round, with a mean
+around 76 (Fahrenheit!) and no conditional mean dynamics. Occasional pressure
+systems, however, can cause bursts of temperature volatility. Such volatility bursts
+generally don't last long enough to drive away guests, but the resort still loses
+revenue from fees on activities that are less popular when the weather isn't
+perfect. In the middle of such a period of high temperature volatility, your boss
+gets worried and asks vou make a forecast of volatility over the next 10 days. After
+some experimentation, you find that daily temperature y , follows
+y, | f2,_i ~ AT (p.. of) ,
+>>
+where a," follows a GARCH(1, 1) process,
+t 2 " 2
+a , = w 4- aE,_, + ficr,_l .
+a. Estimation of your model using historical daily temperature data yields
+ji = 76, u> = 3, a = 0.6, and |3 = 0. If yesterday's temperature was 92 degrees,
+generate point forecasts for each of the next 10 days' conditional variance.
+b. According to your volatility forecasts, how many days will it take until volatility
+drops enough such that there is at least a 90% probability that the
+temperature will be within 4 degrees of 76?
+c. Your boss is impressed by vour knowledge of forecasting and asks you whether
+your model can predict the ne
+
+
+
+###Problem 5, 14.5 Diebold
+
+
+```{r}
+
+specweath <- ugarchspec(
+  variance.model = list(model = "sGARCH",
+                        garchOrder = c(1,1)),
+  mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
+  distribution.model = "norm",
+  fixed.pars = c(mu = 76, omega = 3, alpha1 = .6, beta1 = 0))
+weather <- ugarchpath(specweath, n.sim = 1000, n.start = 1)
+
+plot(fitted(weather), type = "l")
+
+#Still need to figure out how to forecast with this object type, also need to figure out how to condition forecast off previous observation being 96 degrees
+
+
+
+
+
+```

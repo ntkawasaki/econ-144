@@ -1,0 +1,601 @@
+---
+title: "Project 2"
+author: "Noah Kawasaki"
+date: "5/28/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir='/Users/noahkawasaki/Desktop/ECON 144/Week 9', 
+                      echo=FALSE, 
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.width=9, fig.height=5, fig.align="center")
+
+library(tidyverse)
+library(tseries)
+library(forecast)
+library(strucchange)
+library(vars)
+library(lmtest)
+library(car)
+library(Metrics)
+library(stats)
+library(moments)
+```
+
+```{r, include=FALSE}
+# Read in data and select needed variables
+data <- read_csv("/Users/noahkawasaki/Desktop/ECON 144/Week 9/BTS-FUEL.csv") %>%
+  dplyr::select(1, 2, 4) %>%
+  set_names("date", "consumption", "cost") 
+
+# Reverse dataframe from early to latest dates, separate train and test sets
+df <- data[seq(dim(data)[1],1),][1:192, ]
+test_df <- data[seq(dim(data)[1],1),][192:211, ] # 2016 - July 2017
+
+# Make ts objects
+cons_ts <- ts(df$consumption)
+cost_ts <- ts(df$cost)
+```
+
+***
+
+## I. Introduction
+In this project I will explore how, if at all, airine fuel costs drive airline fuel consumption. In theory, I expect time periods with higher fuel costs to associate with lower consumption, and vice versa. The data for this analysis comes from the Bureau of Transportation Statistics. It contains monthly measures of US consumption of airline fuel in millions of gallons and the cost per gallon in dollars. The data spans from 2000 until 2017, though I will split the data from 2016-2017 for a test set to evaluate forecasts. First, I will analyze the consumption and cost time series independently, model them, and evaluate their forecasts. Afterwards, I will create a bivariate VAR model to confirm or deny the hypothesis that fuel costs have predictive power over fuel consumption.
+
+***
+
+## II. Results
+
+### Univariate Analysis
+
+#### *(a) Produce a time-series plot of your data including the respective ACF and PACF plots.*
+```{r}
+# Consumption
+ggplot(df, aes(x=date, y=consumption)) +
+  geom_line(color="#3796db", lwd=0.8) +
+  ggtitle("US Consumption of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Gallons (millions)")
+  
+par(mfrow=c(2, 1))
+acf(df$consumption, main="ACF - Consumption", lag.max=36)
+pacf(df$consumption, main="PACF - Consumption", lag.max=36)
+```
+
+From the time series plot we can observe strong seasonality as well as cycles. There does not appear to be a clear trend, though it is mostly downwards. The ACF plot exhibits a slow decay to zero with higher barlett bands at month 12 and lower ones at month 6. The PACF also exhibits some decaying, oscillating behavior. This suggests the series is not a simple AR process, but has an MA component as well. From these plots, I would try testing some S-ARMA models with varying AR and MA orders. 
+
+
+```{r}
+# Cost
+ggplot(df, aes(x=date, y=cost)) +
+  geom_line(color="orange", lwd=0.8) +
+  ggtitle("US Cost per Gallon of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Dollars")
+
+par(mfrow=c(2,1))
+acf(df$cost, main="ACF - Cost", lag.max=36)
+pacf(df$cost, main="PACF - Cost", lag.max=36)
+```
+
+The time series plot of airline cost per gallon exhibits an overall upwards trend, but again is not clear. The ACF plot suggests strong time dependence, and not necessarily any seasonal components. The PACF shows time dependence up to two lags and is otherwise statistically zero. From these information I would guess that an AR(1) or AR(2) model would be appropriate.
+  
+  
+#### *(b) Fit a model that includes, trend, seasonality and cyclical components. Make sure to discuss your model in detail.*
+```{r}
+# Create Models
+cons_model <- Arima(cons_ts, order=c(2,1,2), seasonal=list(order=c(2,1,2), period=12))
+cost_model <- Arima(cost_ts, order=c(1,1,0))
+
+# Add data to df
+df <- df %>%
+  mutate(
+    consumption_fitted = cons_model$fitted,
+    consumption_residuals = cons_model$residuals,
+    cost_fitted = cost_model$fitted,
+    cost_residuals = cost_model$residuals
+  )
+```
+
+```{r}
+# Consumption
+cons_cols <- c("Fitted Values"="black", "Observed Values"="#3796db")
+ggplot(df, aes(x=date, y=consumption)) +
+  geom_line(aes(color="Observed Values"), lwd=0.8) +
+  geom_line(aes(y=consumption_fitted, color="Fitted Values")) +
+  ggtitle("US Consumption of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Gallons (millions)") +
+  scale_color_manual("Legend", values=cons_cols)
+
+summary(cons_model)
+```
+
+I fit several Seasonal ARIMA models to the airline consumption time series and found the lowest BIC score with an ARIMA(2, 1, 2)(2, 1, 2) (and frequency of 12). In total there are eight parameters, two for each AR, MA, S-AR, and S-MA. The magnitudes of each of the parameters are low, as they range from about [-2, 1]. We can note that both AR(1) and AR(2) components have negative signs, while both MA(1) and MA(2) components carry positive signs. The seasonal AR and MA components have different signs with each other from the first and second orders. The standard errors for each of the is low, so we can hope that these parameters are good estimates. The standard deviation is 23.7, which is good with consideration of the scale of the data. The time series plot with the fitted values and observed values shows a good fit, but there are some troughs and peaks that are underpredicted in magnitude. 
+
+```{r}
+# Cost
+cost_cols <- c("Fitted Values"="black", "Observed Values"="orange")
+ggplot(df, aes(x=date, y=cost)) +
+  geom_line(aes(color="Observed Values"), lwd=0.8) +
+  geom_line(aes(y=cost_fitted, color="Fitted Values")) +
+  ggtitle("US Cost per Gallon of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Dollars") +
+  scale_color_manual("Legend", values=cost_cols)
+
+summary(cost_model)
+```
+
+The cost per gallon model I ended up with was an AR(1). As the time series itself did not exhibit any seasonality, and appears to have high persistence, this did not come at a surprise. The fitted values over the observed values visually indicates a good fit to the data, as this series does not have as complex dynamics as the consumption series. The standard deviation is small at 0.11, along with the other calculated error metrics. The coefficient for the AR(1) component is 0.3239, which indicates a moderate to low level of persistence. Also, note that while the PACF of the series suggested an AR(2) model, the AR(1) model had a lower BIC score. 
+
+
+#### *(c) Plot the respective residuals vs. fitted values and discuss your observations.*
+```{r}
+# Consumption
+ggplot(df, aes(x=consumption_fitted, y=consumption_residuals)) +
+  geom_line(color='green', alpha=0.9) +
+  geom_point(color='green', alpha=0.9) +
+  geom_hline(yintercept=mean(df$consumption_residuals), color='black', linetype='dashed') +
+  ggtitle("Residuals vs Fitted Values", "Consumption Model") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+```
+
+Besides a few outliers, the consumption model residuals look consistently centered around zero. It will be easier to evaluate the model performance in looking at the ACF and PACF of the residuals. 
+
+
+```{r}
+# Cost
+ggplot(df, aes(x=cost_fitted, y=cost_residuals)) +
+  geom_line(color='green', alpha=0.9) +
+  geom_point(color='green', alpha=0.9) +
+  geom_hline(yintercept=mean(df$cost_residuals), color='black', linetype='dashed') +
+  ggtitle("Residuals vs Fitted Values", "Cost Model") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+```
+
+The cost model residuals also appear to be somewhat consistently centered around zero. There are some outliers as well as some volatility clustering, but this is at a small scale so I will dismiss this pattern has meaning.
+
+
+#### *(e) Plot the ACF and PACF of the respective residuals and interpret the plots.*
+```{r}
+# Consumption
+par(mfrow=c(2,1))
+acf(df$consumption_residuals, main="ACF - Consumption Model Residuals")
+pacf(df$consumption_residuals, main="PACF - Consumption Model Residuals")
+```
+
+The ACF and PACF of the consumption model residuals resemble a white noise process. So the ARIMA(2, 1, 2)(2, 1, 2) model effectively teased out the seasonality and cyclical nature of the consumption series. 
+
+```{r}
+# Cost
+par(mfrow=c(2,1))
+acf(df$cost_residuals, main="ACF - Cost Model Residuals")
+pacf(df$cost_residuals, main="PACF - Cost Model Residuals")
+
+Box.test(df$cost_residuals, lag=(11-2-2))  # 11 lags - 2 AR - 2 MA
+```
+
+The ACF and PACF plot of the cost model residuals, for the most part, also resemble white noise. There is a significant barlett band at a lag of 11. The Box-Pierce test gives us a X-squared of 3.6765 and a p-value of 0.8162 so we cannot reject the null hypothesis that the data are independently distributed.
+
+
+#### *(f) Plot the respective CUSUM and interpret the plot.*
+```{r}
+# Consumption
+plot(efp(df$consumption_residuals~1, type="Rec-CUSUM"), main="Consumption Model CUSUM Test")
+```
+
+The consumption model CUSUM plot shows that the cumulative sum of the residuals stays within the confidence interval, so we can conclude that the model does not break at any specific time. There is some low magnitude pattern of a persisent above zero, then zero, then above zero region.
+
+```{r}
+# Cost
+plot(efp(df$cost_residuals~1, type="Rec-CUSUM"), main="Cost Model CUSUM Test")
+```
+
+Likewise, the CUSUM plot of the cost model residuals shows the cumulative sum within the confidence interval. So we can also conclude that the cost model does not break at a specific point in time.
+
+
+#### *(g) Plot the respective Recursive Residuals and interpret the plot.*
+```{r}
+# Consumption
+plot(recresid(df$consumption_residuals~1), pch=16, main="Consumption Model Recursive Residuals",
+     ylab="Residuals")
+```
+
+To further confirm from part f, the recursive residuals plot is consistent about zero, with only two outliers that were not adequately captured by the model. There is no structural break in the pattern of the residuals. 
+
+
+```{r}
+# Cost
+plot(recresid(df$cost_residuals~1), pch=16, main="Consumption Model Recursive Residuals",
+     ylab="Residuals")
+```
+
+The cost model recursive residuals, like the consumption model, does not appear to break anywhere. The recursive residuals mostly revolve about zero, with the exception of some negative outliers in the middle and one positive outlier at the end. 
+
+
+#### *(h) For your model, discuss the associated diagnostic statistics.*
+```{r}
+# Consumption
+coeftest(cons_model)
+```
+
+Aside from the statistics already discussed in part b, we can still look at the significance of the parameters and some other tests. From the coefficient test, we note that only four of the estimated parameters are statistically significant. Those being the AR(1), MA(1), S-AR(1), and S-MA(1) terms. So the second period lag coefficients are determined to not contain statistical significance and the consumption time series is a short-term dynamics process. 
+
+
+```{r}
+ggplot(df) +
+  geom_qq(aes(sample=consumption_residuals), color='black', alpha=0.6) +
+  ggtitle('QQ Normal Plot of Residuals', 'Consumption Model') +
+  ylab('Sample Quantiles') +
+  xlab('Theoretical Quantiles')
+
+print(paste("Skewness:", skewness(df$consumption_residuals)))
+print(paste("Kurtosis:", kurtosis(df$consumption_residuals)))
+```
+
+We can also look more closely at the distribution of the residuals. The residuals are not normally distributed, they have a slight left skew of -1.34 and a much higher kurtosis at 16.14. So the ARIMA model could use improvement with respect to extreme values. 
+
+
+```{r}
+# Cost
+coeftest(cost_model)
+```
+
+The cost model only had one parameter, AR(1), which is statistically significant.
+
+
+```{r}
+ggplot(df) +
+  geom_qq(aes(sample=cost_residuals), color='black', alpha=0.6) +
+  ggtitle('QQ Normal Plot of Residuals', 'Cost Model') +
+  ylab('Sample Quantiles') +
+  xlab('Theoretical Quantiles')
+
+print(paste("Skewness:", skewness(df$cost_residuals)))
+print(paste("Kurtosis:", kurtosis(df$cost_residuals)))
+```
+
+Similar to the consumption model residuals, the cost model residuals are also slightly skewed to the left and have a higher than Normal kurtosis. Both the series have more outliers in the data than a normal distribution. 
+
+
+#### *(i) Use your model to forecast 12-steps ahead. Your forecast should include the respective error bands.*
+```{r}
+# Consumption
+cons_forecasts <- forecast(cons_model, h=20)
+plot(cons_forecasts)
+
+print(paste("RMSE:", rmse(test_df$consumption, cons_forecasts$mean)))
+```
+
+Take a visual note of how the ARIMA model forecasts with cyclical and seasonal behavior. It appears that this model is forecasting a period of higher fuel consumption, and then a period of lower consumption. We can also calculate the RMSE score between the saved test set of observed values from 2016 to mid 2017 and the forecasted values This model gave a RMSE of 72.78 over these 20 periods. This will serve as a comparison point for the multivariate analysis.
+
+
+```{r}
+# Cost
+cost_forecasts <- forecast(cost_model, h=20)
+plot(cost_forecasts)
+
+print(paste("RMSE:", rmse(test_df$cost, cost_forecasts$mean)))
+```
+
+Since our model for the cost series was an AR(1), it really only has predictive power at one-step-ahead. So we see a fast convergence to the unconditional mean.  The RMSE for the forecasts versus the observed values from 2016 to mid 2017 is 0.198. This will serve as a comparison point for the multivariate analysis.
+
+
+### VAR Analysis
+
+#### *(i) Fit an appropriate VAR model using your two variables. Make sure to show the relevant plots and discuss your results from the fit.*
+```{r}
+# Model
+var_df <- data.frame(cbind(cons_ts, cost_ts))
+var <- VAR(var_df, p=2, season=12)
+summary(var)
+```
+
+From the summary of our VAR models we have equations for the consumption time series and the cost time series. Because the purpose of the assignment was to analyze whether or not fuel costs affected fuel consumption, only the first model is relevant to us. We can see from the coefficient estimates that, like the consumption model, there are significant AR(1) and AR(2) components. However, contrary to my hypothesis, the lagged cost variables do not have statistical significance. This came as a surprise to me, as I believed from an economic standpoint that the supply and demand forces would play into the interaction between these two phenomena. Additionally, we see seasonal significance for all months except for June and July (depending on the confidence level chosen). Here, the residual standared error is 25.27, which is slightly higher than the univariate model's 23.7. So as of now, it appears that the consumption model performs better on itself than inclusion of the cost series. The correlation matrix indicates a weak negative correlation between the variables. This is what I expected, because one would think higher prices would lead to less consumption and vice versa, however the magnitude is much smaller than I theorized.
+
+As for the cost model, only lagged values of itself are statistically significant. This comes at no surprise intuitively. There is also one significant seasonal variable for February. The residual standard error is 0.1197, which is almost identical to the univariate cost model. So, we can conclude that seasonailty is not a strong force in the cost time series and that the inclusion of the consumption series did not have much of an influence on cost modeling. 
+
+
+```{r, fig.height=7}
+plot(var)
+```
+
+From the diagrams above, the overall fit to the data looks similar to the univariate model's fit. The residuals look mostly like white noise, besides the outlier in the beginning and one significant spike in the PACF at lag 9. Likewise, the multivariate cost diagrams do not differ significantly from the univariate model diagrams. Both model residuals for the cost series show significant barlett bands at lags of 11 in the ACF and PACF that were not adequately captured. 
+
+
+```{r}
+# CCF
+ccf(cons_ts, cost_ts, main="CCF - Consumption and Cost")
+```
+
+Another plot to consider is the Cross Correlation Function. As we saw from the correlation matrix, there is an obvious negative relationship between fuel consmption and cost. Both to the right and left of zero there is a slow decay to zero, though the right side exhibits some slight cyclical pattern and overall stronger signals. Note that the scale of the plot maxes out around -0.6, so these correlations are very strong, explaining how cost is not a primary driver of consumption. 
+
+
+#### *(j) Compute, plot, and interpret the respective impulse response functions.*
+```{r}
+plot(irf(var))
+```
+
+The IRF plot from consumption indicates a moderate immediate response, and then a slow decay to zero afterwards from itself. And the cost response from consumption is essentially zero. As discussed earlier, we do not expect consumption to have any driving power over cost. The IRF from cost however, gets a small response from consumption, which then slowly decays below zero. So changes in cost do in fact have an inverted relationship with consumption, but not of a great magnitude.
+
+
+#### *(k) Perform a Granger-Causality test on your variables and discuss your results from the test.*
+```{r}
+grangertest(cons_ts ~ cost_ts, order=2)
+grangertest(cost_ts ~ cons_ts, order=2)
+```
+
+The Granger-Causality test of cost on consumption gives us a p-value of 0.007, so depending on the chosen confidence level we can conclude that cost does Granger-Cause consumption. But as we have seen before, the cost per gallon does not necessarily *drive* consumption patterns, and only has a negative relationship.
+
+The Granger-Causality test of consumption on cost gives a p-value of 0.71, so we can conclude that consumption does not Granger-Cause costs. 
+
+
+#### *(l) Use your VAR model to forecast 12-steps ahead. Your forecast should include the respective error bands. Comment on the differences between the two forecasts (VAR vs. ARMA).*
+```{r, fig.height=6}
+var_forecasts = predict(object=var, n.ahead=20)
+plot(var_forecasts)
+```
+
+
+```{r}
+var_cons_forecasts <- var_forecasts[[1]][[1]][,1]
+var_cost_forecasts <- var_forecasts[[1]][[2]][,1]
+
+# RMSE
+print(paste("RMSE Consumption:", rmse(test_df$consumption, var_cons_forecasts)))
+print(paste("RMSE Cost:", rmse(test_df$cost, var_cost_forecasts)))
+
+```
+
+The ultimate goal of the project was to forecast airline fuel consumption, and to see whether or not adding fuel cost per gallon to a model could help in this process. At a visual perspective, the multivariate consumption model forecasts follow a similar pattern to the univariate forecasts. The seasonal and cyclical nature are both accounted for. However, the RMSE was 76.01, which is slightly higher than the univariate model's of 72.78. For the cost series, the forecast of the multivariate model better incorporates seasonality, and reflects this in its RMSE of 0.14 as compared to the univariate model's of 0.197. 
+
+
+***
+
+## III. Conclusions and Future Work 
+
+The purpose of this project was to explore whether or not airline fuel consumption and fuel cost follow a traditional economic model of supply and demand. My overall hypothesis was that fuel consumption and fuel cost per gallon would have a strong negative correlation, and thus fuel costs would be effective in predicting future consumption. The applications of a study like this would be for any economic process where aviation transportation plays a large part. So this could be things like high speed international trade and tourism. Ideally, airlines can forecast the demand for air travel and how much fuel will be needed over the course of time. 
+
+From the analysis above, the main discovery was that airline fuel consumption and airline fuel cost per gallon are in fact negatively associated with each other, but not at a strong enough magnitude to have any predictive power. We compared the univariate consumption and cost models to the multivariate VAR models. For consumption, I found the univarite model with AR and MA components to be more performant than the VAR model that included a cost time series. On the other hand, the VAR cost model performed better than the univariate one. These two comparisons were carried out by computing an RMSE score for each model on a dedicated test set of data from 2016 to mid 2017. 
+
+There are undoubtedly many things that could improve a study like this. First, and foremost, more domain knowledge on the airline industry and the process of transportation is absolutely necessary. There are many questions that I am sure I did not even know to ask about the relationship between fuel consumption and costs. Second, more variables could be added in to the VAR modelling component. A process such as airline fuel consumption is a highly dynamic system and I imagine many different forces come into play. From an economic standpoint, air travel could be thought of as a necessary good in some cases. So a different in fuel price may not make an impact of flight demand as people may *need* to travel regardless. The last thing that be improved up in the future is a deeper knowledge of the R packages *vars* and *forecast* that I used to fit models. Because the models contained both AR, MA, and seasonal components, I was not sure how to hard code in AR and MA components with additive seasonal dummy variables. To highlight this constraint, we saw that the VAR cost model performed better than the univariate model in terms of RMSE even though we know that the cost series does not exhibit seasonality. So with that, a more advancing knowledge of model building would be beneficial in having the ability to fine tune models for this particular data. 
+
+
+***
+
+## IV. References
+
+*“Airline Fuel Cost and Consumption (U.S. Carriers - Scheduled).” Bureau of Transportation Statistics, www.transtats.bts.gov/fuel.asp.*
+
+***
+
+## V. R Source Code
+```{r, eval=FALSE, echo=TRUE}
+# Set global rmarkdown settings
+knitr::opts_chunk$set(root.dir='/Users/noahkawasaki/Desktop/ECON 144/Week 9', 
+                      echo=FALSE, 
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.width=9, fig.height=5, fig.align="center")
+
+# Load libraries
+library(tidyverse)
+library(tseries)
+library(forecast)
+library(strucchange)
+library(vars)
+library(lmtest)
+library(car)
+library(Metrics)
+library(stats)
+library(moments)
+
+
+# Read in data and select needed variables
+data <- read_csv("/Users/noahkawasaki/Desktop/ECON 144/Week 9/BTS-FUEL.csv") %>%
+  dplyr::select(1, 2, 4) %>%
+  set_names("date", "consumption", "cost") 
+
+# Reverse dataframe from early to latest dates, separate train and test sets
+df <- data[seq(dim(data)[1],1),][1:192, ]
+test_df <- data[seq(dim(data)[1],1),][192:211, ] # 2016 - July 2017
+
+# Make ts objects
+cons_ts <- ts(df$consumption)
+cost_ts <- ts(df$cost)
+
+
+## (a)
+# Consumption
+ggplot(df, aes(x=date, y=consumption)) +
+  geom_line(color="#3796db", lwd=0.8) +
+  ggtitle("US Consumption of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Gallons (millions)")
+  
+par(mfrow=c(2, 1))
+acf(df$consumption, main="ACF - Consumption", lag.max=36)
+pacf(df$consumption, main="PACF - Consumption", lag.max=36)
+
+# Cost
+ggplot(df, aes(x=date, y=cost)) +
+  geom_line(color="orange", lwd=0.8) +
+  ggtitle("US Cost per Gallon of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Dollars")
+
+par(mfrow=c(2,1))
+acf(df$cost, main="ACF - Cost", lag.max=36)
+pacf(df$cost, main="PACF - Cost", lag.max=36)
+
+
+## (b)
+# Create Models
+cons_model <- Arima(cons_ts, order=c(2,1,2), seasonal=list(order=c(2,1,2), period=12))
+cost_model <- Arima(cost_ts, order=c(1,1,0))
+
+# Add model attributes as data to df for plotting purposes
+df <- df %>%
+  mutate(
+    consumption_fitted = cons_model$fitted,
+    consumption_residuals = cons_model$residuals,
+    cost_fitted = cost_model$fitted,
+    cost_residuals = cost_model$residuals
+  )
+
+# Consumption
+cons_cols <- c("Fitted Values"="black", "Observed Values"="#3796db")  # Named vector for legend mapping
+ggplot(df, aes(x=date, y=consumption)) +
+  geom_line(aes(color="Observed Values"), lwd=0.8) +
+  geom_line(aes(y=consumption_fitted, color="Fitted Values")) +
+  ggtitle("US Consumption of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Gallons (millions)") +
+  scale_color_manual("Legend", values=cons_cols)
+
+summary(cons_model)
+
+# Cost
+cost_cols <- c("Fitted Values"="black", "Observed Values"="orange")  # Named vector for legend mapping
+ggplot(df, aes(x=date, y=cost)) +
+  geom_line(aes(color="Observed Values"), lwd=0.8) +
+  geom_line(aes(y=cost_fitted, color="Fitted Values")) +
+  ggtitle("US Cost per Gallon of Airline Fuel", "2000-2015") +
+  xlab("Date") +
+  ylab("Dollars") +
+  scale_color_manual("Legend", values=cost_cols)
+
+summary(cost_model)
+
+
+## (c)
+# Consumption
+ggplot(df, aes(x=consumption_fitted, y=consumption_residuals)) +
+  geom_line(color='green', alpha=0.9) +
+  geom_point(color='green', alpha=0.9) +
+  geom_hline(yintercept=mean(df$consumption_residuals), color='black', linetype='dashed') +
+  ggtitle("Residuals vs Fitted Values", "Consumption Model") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+
+# Cost
+ggplot(df, aes(x=cost_fitted, y=cost_residuals)) +
+  geom_line(color='green', alpha=0.9) +
+  geom_point(color='green', alpha=0.9) +
+  geom_hline(yintercept=mean(df$cost_residuals), color='black', linetype='dashed') +
+  ggtitle("Residuals vs Fitted Values", "Cost Model") +
+  xlab("Fitted Values") +
+  ylab("Residuals")
+
+
+## (e)
+# Consumption
+par(mfrow=c(2,1))
+acf(df$consumption_residuals, main="ACF - Consumption Model Residuals")
+pacf(df$consumption_residuals, main="PACF - Consumption Model Residuals")
+
+# Cost
+par(mfrow=c(2,1))
+acf(df$cost_residuals, main="ACF - Cost Model Residuals")
+pacf(df$cost_residuals, main="PACF - Cost Model Residuals")
+
+Box.test(df$cost_residuals, lag=(11-2-2))  # 11 lags - 2 AR - 2 MA
+
+
+## (f)
+# Consumption
+plot(efp(df$consumption_residuals~1, type="Rec-CUSUM"), main="Consumption Model CUSUM Test")
+
+# Cost
+plot(efp(df$cost_residuals~1, type="Rec-CUSUM"), main="Cost Model CUSUM Test")
+
+
+## (g)
+# Consumption
+plot(recresid(df$consumption_residuals~1), pch=16, main="Consumption Model Recursive Residuals",
+     ylab="Residuals")
+
+# Cost
+plot(recresid(df$cost_residuals~1), pch=16, main="Consumption Model Recursive Residuals",
+     ylab="Residuals")
+
+
+## (h)
+# Consumption
+coeftest(cons_model)  # Statistical Significance of parameters
+
+ggplot(df) +
+  geom_qq(aes(sample=consumption_residuals), color='black', alpha=0.6) +
+  ggtitle('QQ Normal Plot of Residuals', 'Consumption Model') +
+  ylab('Sample Quantiles') +
+  xlab('Theoretical Quantiles')
+
+print(paste("Skewness:", skewness(df$consumption_residuals)))
+print(paste("Kurtosis:", kurtosis(df$consumption_residuals)))
+
+# Cost
+coeftest(cost_model)  # Statistical Significance of parameters
+
+ggplot(df) +
+  geom_qq(aes(sample=cost_residuals), color='black', alpha=0.6) +
+  ggtitle('QQ Normal Plot of Residuals', 'Cost Model') +
+  ylab('Sample Quantiles') +
+  xlab('Theoretical Quantiles')
+
+print(paste("Skewness:", skewness(df$cost_residuals)))
+print(paste("Kurtosis:", kurtosis(df$cost_residuals)))
+
+
+## (i)
+# Consumption
+cons_forecasts <- forecast(cons_model, h=20)
+plot(cons_forecasts)
+
+print(paste("RMSE:", rmse(test_df$consumption, cons_forecasts$mean)))
+
+# Cost
+cost_forecasts <- forecast(cost_model, h=20)
+plot(cost_forecasts)
+
+print(paste("RMSE:", rmse(test_df$cost, cost_forecasts$mean)))
+
+
+## (i)
+# Model
+var_df <- data.frame(cbind(cons_ts, cost_ts))  # VAR takes df
+var <- VAR(var_df, p=2, season=12)
+summary(var)
+
+plot(var)
+
+# CCF
+ccf(cons_ts, cost_ts, main="CCF - Consumption and Cost")
+
+
+## (j)
+plot(irf(var))
+
+
+## (k)
+grangertest(cons_ts ~ cost_ts, order=2)
+grangertest(cost_ts ~ cons_ts, order=2)
+
+
+## (l)
+var_forecasts = predict(object=var, n.ahead=20)
+plot(var_forecasts)
+
+# Access forecast vectors from var_forecasts object
+var_cons_forecasts <- var_forecasts[[1]][[1]][,1]
+var_cost_forecasts <- var_forecasts[[1]][[2]][,1]
+
+# RMSE
+print(paste("RMSE Consumption:", rmse(test_df$consumption, var_cons_forecasts)))
+print(paste("RMSE Cost:", rmse(test_df$cost, var_cost_forecasts)))
+```
+
